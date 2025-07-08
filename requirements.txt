@@ -7,3 +7,6 @@ prophet
 openai
 python-dotenv
 requests
+flask
+fastapi
+uvicorn[standard]
