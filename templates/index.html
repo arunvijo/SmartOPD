@@ -27,6 +27,7 @@
           <th>Triage</th>
           <th>Symptoms</th>
           <th>Timestamp</th>
+          <th>Profile Tags</th>
         </tr>
       </thead>
       <tbody>
@@ -37,6 +38,7 @@
           <td>{{ row.triage_level }}</td>
           <td>{{ row.symptoms }}</td>
           <td>{{ row.timestamp }}</td>
+          <td>{{ row.tags if row.tags else '—' }}</td>
         </tr>
         {% endfor %}
       </tbody>

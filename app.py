@@ -2,9 +2,9 @@ from flask import Flask, render_template, request, session
 import pandas as pd
 import os
 import requests
+from agents.personalization import get_profile
 
 app = Flask(__name__)
-app.secret_key = "smartopd-secret-key"
 
 QUEUE_FILE = "data/token_queue.csv"
 FOLLOWUP_FILE = "data/followups.csv"
@@ -13,40 +13,30 @@ FUTURE_FILE = "data/future_tokens.csv"
 
 @app.route("/")
 def index():
-    # Load token queue
     queue = pd.read_csv(QUEUE_FILE) if os.path.exists(QUEUE_FILE) else pd.DataFrame(columns=["token", "name", "symptoms", "triage_level", "timestamp", "reason"])
-
-    # Load follow-up patients
-    followups = pd.read_csv(FOLLOWUP_FILE) if os.path.exists(FOLLOWUP_FILE) else pd.DataFrame(columns=["name", "last_triage", "last_visit", "days_since", "status"])
+    followups = pd.read_csv(FOLLOWUP_FILE) if os.path.exists(FOLLOWUP_FILE) else pd.DataFrame()
     future_tokens = pd.read_csv(FUTURE_FILE) if os.path.exists(FUTURE_FILE) else pd.DataFrame()
 
     return render_template("index.html",
-                        queue=queue.to_dict(orient="records"),
-                        followups=followups.to_dict(orient="records"),
-                        future_bookings=future_tokens.to_dict(orient="records"))
+        queue=queue.to_dict(orient="records"),
+        followups=followups.to_dict(orient="records"),
+        future_bookings=future_tokens.to_dict(orient="records")
+    )
 
 
 @app.route("/feedback", methods=["GET", "POST"])
 def feedback():
     msg = None
     if request.method == "POST":
-        name = request.form["name"]
-        token = int(request.form["token"])
-        triage = request.form["triage"]
-        feedback_text = request.form["feedback"]
-
-        # Send to FastAPI endpoint
         try:
-            res = requests.post("http://localhost:8000/feedback", json={
-                "name": name,
-                "token": token,
-                "triage": triage,
-                "feedback": feedback_text
-            })
-            if res.status_code == 200:
-                msg = f"Thank you! Sentiment: {res.json()['sentiment']}"
-            else:
-                msg = f"Server Error: {res.status_code}"
+            payload = {
+                "name": request.form["name"],
+                "token": int(request.form["token"]),
+                "triage": request.form["triage"],
+                "feedback": request.form["feedback"]
+            }
+            res = requests.post("http://localhost:8000/feedback", json=payload)
+            msg = f"✅ Thank you! Sentiment: {res.json()['sentiment']}" if res.status_code == 200 else f"Server Error: {res.status_code}"
         except Exception as e:
             msg = f"Error: {e}"
 
@@ -55,13 +45,9 @@ def feedback():
 
 @app.route("/admin")
 def admin():
-    patient_file = "data/patients.csv"
-    feedback_file = "data/feedback.csv"
-    followup_file = "data/followups.csv"
-
-    patients = pd.read_csv(patient_file) if os.path.exists(patient_file) else pd.DataFrame()
-    feedbacks = pd.read_csv(feedback_file) if os.path.exists(feedback_file) else pd.DataFrame()
-    followups = pd.read_csv(followup_file) if os.path.exists(followup_file) else pd.DataFrame()
+    patients = pd.read_csv("data/patients.csv") if os.path.exists("data/patients.csv") else pd.DataFrame()
+    feedbacks = pd.read_csv("data/feedback.csv") if os.path.exists("data/feedback.csv") else pd.DataFrame()
+    followups = pd.read_csv("data/followups.csv") if os.path.exists("data/followups.csv") else pd.DataFrame()
 
     stats = {
         "total_patients": len(patients),
@@ -84,20 +70,20 @@ def admin():
     heatmap = patients["symptoms"].value_counts().head(10).to_dict() if not patients.empty else {}
 
     return render_template("admin_dashboard.html",
-                           stats=stats,
-                           heatmap=heatmap,
-                           feedbacks=feedbacks.to_dict(orient="records"))
+        stats=stats,
+        heatmap=heatmap,
+        feedbacks=feedbacks.to_dict(orient="records")
+    )
+
 
 @app.route("/export")
 def export_data():
-    file_path = "data/patients.csv"
-    if os.path.exists(file_path):
-        df = pd.read_csv(file_path)
+    if os.path.exists("data/patients.csv"):
+        df = pd.read_csv("data/patients.csv")
         export_path = "data/patient_report.xlsx"
         df.to_excel(export_path, index=False)
         return f"✅ Exported to {export_path}"
     return "⚠️ No patient data found."
-
 
 
 @app.route("/chatbot", methods=["GET", "POST"])
@@ -178,7 +164,6 @@ def chatbot():
 
         elif stage == "symptoms":
             data["symptoms"] = user_input
-            features = data.get("symptom_flags", {})
             payload = {
                 "name": data["name"],
                 "age": data["age"],
@@ -188,6 +173,7 @@ def chatbot():
                 "symptoms": data["symptoms"],
                 "disease": data["disease"]
             }
+
             try:
                 response = requests.post("http://localhost:8000/triage", json=payload)
                 if response.status_code == 200:
@@ -195,13 +181,14 @@ def chatbot():
                     token = result.get("token")
                     triage = result.get("triage")
                     msg = result.get("suggested_action")
-                    bot_reply = f"✅ Token {token} assigned. Triage: {triage}. {msg}" if token else f"⚠️ {msg}"
+                    profile = get_profile(data["name"])
+                    tags = profile.get("tags", [])
+                    tag_str = ", ".join(tags) if tags else "No tags"
+                    bot_reply = f"✅ Token {token} assigned. Triage: {triage}. {msg}<br>🧠 Profile Tags: {tag_str}" if token else f"⚠️ {msg}"
                 else:
                     bot_reply = f"❌ Server error: {response.status_code}"
             except Exception as e:
                 bot_reply = f"Error contacting backend: {str(e)}"
-        else:
-            bot_reply = "You're already registered. Click 'Clear' to restart."
 
         session["data"] = data
         session["conversation"].append({"sender": "bot", "text": bot_reply})

@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 import pandas as pd
 import os
-from agents import crowd_predictor, symptom_triage, token_scheduler, followup_scheduler, future_scheduler
+from agents import crowd_predictor, symptom_triage, token_scheduler, followup_scheduler, future_scheduler, personalization
 from utils.speech_utils import speak_token
 import threading
 import time
@@ -143,6 +143,14 @@ def triage(data: PatientRequest):
     df_record = pd.DataFrame([record])
     df_record.to_csv(history_path, mode='a', header=not os.path.exists(history_path), index=False)
 
+    personalization.update_profile(
+        data.name,
+        data.age,
+        data.gender,
+        data.disease,
+        result["triage"]
+    )
+
     return {
         "token": int(token),
         "triage": result["triage"],
@@ -157,3 +165,5 @@ def get_followups():
         df = pd.read_csv("data/followups.csv")
         return df.to_dict(orient="records")
     return []
+
+
