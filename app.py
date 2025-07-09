@@ -25,6 +25,47 @@ def index():
                         followups=followups.to_dict(orient="records"),
                         future_bookings=future_tokens.to_dict(orient="records"))
 
+
+@app.route("/feedback", methods=["GET", "POST"])
+def feedback():
+    msg = None
+    if request.method == "POST":
+        name = request.form["name"]
+        token = int(request.form["token"])
+        triage = request.form["triage"]
+        feedback_text = request.form["feedback"]
+
+        # Send to FastAPI endpoint
+        try:
+            res = requests.post("http://localhost:8000/feedback", json={
+                "name": name,
+                "token": token,
+                "triage": triage,
+                "feedback": feedback_text
+            })
+            if res.status_code == 200:
+                msg = f"Thank you! Sentiment: {res.json()['sentiment']}"
+            else:
+                msg = f"Server Error: {res.status_code}"
+        except Exception as e:
+            msg = f"Error: {e}"
+
+    return render_template("feedback.html", message=msg)
+
+
+@app.route("/admin")
+def admin():
+    feedback_file = "data/feedback.csv"
+    if os.path.exists(feedback_file):
+        df = pd.read_csv(feedback_file)
+        summary = df.groupby("sentiment").size().reset_index(name="count").to_dict(orient="records")
+    else:
+        summary = []
+
+    return render_template("admin.html", summary=summary)
+
+
+
 @app.route("/chatbot", methods=["GET", "POST"])
 def chatbot():
     if "conversation" not in session:

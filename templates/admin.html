@@ -1,0 +1,10 @@
+<h2 class="mt-5">📊 Feedback Summary</h2>
+{% if summary %}
+  <ul>
+    {% for item in summary %}
+      <li><strong>{{ item.sentiment }}</strong>: {{ item.count }}</li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p>No feedback received yet.</p>
+{% endif %}

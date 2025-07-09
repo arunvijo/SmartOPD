@@ -10,6 +10,30 @@ import time
 
 app = FastAPI()
 
+# In your main FastAPI file
+
+from pydantic import BaseModel
+from agents import feedback_analyzer
+
+class FeedbackRequest(BaseModel):
+    name: str
+    token: int
+    triage: str
+    feedback: str
+
+@app.post("/feedback")
+def submit_feedback(data: FeedbackRequest):
+    sentiment = feedback_analyzer.save_feedback(
+        data.name,
+        data.token,
+        data.triage,
+        data.feedback
+    )
+    return {
+        "message": "✅ Feedback submitted.",
+        "sentiment": sentiment
+    }
+
 class PatientRequest(BaseModel):
     name: str
     age: int
