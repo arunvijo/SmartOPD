@@ -14,6 +14,7 @@ from agents.future_scheduler import run_future_appointments
 from agents.token_scheduler import run_token_assignment
 from utils.sms_utils import send_sms
 
+
 logging.basicConfig(level=logging.INFO, filename="logs/agent_log.txt", filemode="a",
                     format="%(asctime)s - %(levelname)s - %(message)s")
 

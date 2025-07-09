@@ -3,6 +3,13 @@ import pandas as pd
 import os
 import requests
 from agents.personalization import get_profile
+# app.py (top)
+import threading
+from orchestrator_offline import orchestrator_loop
+
+# Start orchestrator in background
+orchestrator_thread = threading.Thread(target=orchestrator_loop, daemon=True)
+orchestrator_thread.start()
 
 app = Flask(__name__)
 
