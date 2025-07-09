@@ -12,3 +12,9 @@ fastapi
 uvicorn[standard]
 scikit-learn 
 notebook
+jinja2
+python-multipart
+aiofiles
+joblib
+nltk
+openpyxl

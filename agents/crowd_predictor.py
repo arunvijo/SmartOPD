@@ -28,5 +28,9 @@ def save_predictions_to_file():
     df.to_json(output_path, orient="records", indent=2)
     print(f"✅ Crowd forecast saved to {output_path}")
 
+# ✅ Add this so orchestrator can call it
+def run_crowd_forecast():
+    save_predictions_to_file()
+
 if __name__ == "__main__":
     save_predictions_to_file()

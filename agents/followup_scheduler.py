@@ -44,5 +44,9 @@ def save_followups():
     else:
         print("🔎 No follow-ups needed today.")
 
+# ✅ Wrapper for orchestrator
+def run_followup_check():
+    save_followups()
+
 if __name__ == "__main__":
     save_followups()

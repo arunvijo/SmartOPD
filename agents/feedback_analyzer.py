@@ -34,3 +34,7 @@ def save_feedback(name, token, triage, feedback_text):
         df.to_csv(FEEDBACK_FILE, mode='w', header=True, index=False)
 
     return sentiment
+
+# ✅ Wrapper for orchestrator
+def run_feedback_analysis():
+    save_feedback()

@@ -1,4 +1,3 @@
-<!-- app/templates/chatbot.html -->
 <!DOCTYPE html>
 <html>
 <head>
@@ -7,23 +6,68 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
-    html, body { height: 100%; margin: 0; }
-    .chat-container { display: flex; flex-direction: column; height: 100vh; max-width: 600px; margin: auto; background-color: #f8f9fa; border-left: 1px solid #ddd; border-right: 1px solid #ddd; }
-    .chat-box { flex: 1; overflow-y: auto; padding: 20px; }
-    .chat-bubble { max-width: 75%; padding: 10px 15px; margin-bottom: 10px; border-radius: 15px; word-wrap: break-word; }
-    .user-msg { background-color: #d1e7dd; align-self: flex-end; }
-    .bot-msg { background-color: #f8d7da; align-self: flex-start; }
-    .chat-input { position: sticky; bottom: 0; background: white; padding: 10px; border-top: 1px solid #ccc; }
-    .chat-header { text-align: center; padding: 10px; border-bottom: 1px solid #ccc; background: white; }
+    html, body {
+      height: 100%;
+      margin: 0;
+    }
+    .chat-container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      max-width: 100%;
+      margin: auto;
+      background-color: #f8f9fa;
+    }
+    .chat-box {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem;
+    }
+    .chat-bubble {
+      max-width: 80%;
+      padding: 10px 15px;
+      margin-bottom: 10px;
+      border-radius: 15px;
+      word-wrap: break-word;
+    }
+    .user-msg {
+      background-color: #d1e7dd;
+      align-self: flex-end;
+    }
+    .bot-msg {
+      background-color: #f8d7da;
+      align-self: flex-start;
+    }
+    .chat-input {
+      position: sticky;
+      bottom: 0;
+      background: white;
+      padding: 10px;
+      border-top: 1px solid #ccc;
+      display: flex;
+      gap: 0.5rem;
+    }
+    .chat-header {
+      text-align: center;
+      padding: 10px;
+      border-bottom: 1px solid #ccc;
+      background: white;
+    }
+    @media (max-width: 576px) {
+      .chat-container {
+        border: none;
+        padding: 0 10px;
+      }
+    }
   </style>
 </head>
 <body>
   <div class="chat-container">
     <div class="chat-header position-relative">
       <h5>🤖 SmartOPD Chat Assistant</h5>
-      <form action="/chatbot" method="POST" class="position-absolute end-0 top-0">
+      <form action="/chatbot" method="POST" class="position-absolute end-0 top-0 me-2 mt-2">
         <input type="hidden" name="message" value="__clear__">
-        <button class="btn btn-sm btn-outline-danger me-2 mt-1">Clear</button>
+        <button class="btn btn-sm btn-outline-danger">Clear</button>
       </form>
     </div>
 
@@ -36,8 +80,8 @@
       {% endfor %}
     </div>
 
-    <form method="POST" class="chat-input d-flex">
-      <input type="text" name="message" class="form-control me-2" placeholder="Type your message..." autocomplete="off" autofocus required>
+    <form method="POST" class="chat-input">
+      <input type="text" name="message" class="form-control" placeholder="Type your message..." autocomplete="off" autofocus required>
       <button type="submit" class="btn btn-primary">Send</button>
     </form>
   </div>

@@ -12,10 +12,20 @@ orchestrator_thread = threading.Thread(target=orchestrator_loop, daemon=True)
 orchestrator_thread.start()
 
 app = Flask(__name__)
+app.secret_key = "smartopd-key"
 
 QUEUE_FILE = "data/token_queue.csv"
 FOLLOWUP_FILE = "data/followups.csv"
 FUTURE_FILE = "data/future_tokens.csv"
+
+# Ensure data directory and patients.csv exist
+os.makedirs("data", exist_ok=True)
+PATIENTS_CSV = "data/patients.csv"
+if not os.path.exists(PATIENTS_CSV):
+    pd.DataFrame(columns=[
+        "token", "name", "age", "gender", "blood_pressure",
+        "cholesterol_level", "symptoms", "disease", "triage", "timestamp"
+    ]).to_csv(PATIENTS_CSV, index=False)
 
 
 @app.route("/")
@@ -201,3 +211,8 @@ def chatbot():
         session["conversation"].append({"sender": "bot", "text": bot_reply})
 
     return render_template("chatbot.html", conversation=session["conversation"])
+
+
+if __name__ == "__main__":
+    app.secret_key = "smartopd-key"  # required for session
+    app.run(debug=True)

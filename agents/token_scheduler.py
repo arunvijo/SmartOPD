@@ -63,6 +63,9 @@ def assign_token(name, symptoms, triage_level, reason):
 
     return new_token, queue
 
+def run_token_assignment():
+    assign_token()
+
 
 # CLI Test
 if __name__ == "__main__":

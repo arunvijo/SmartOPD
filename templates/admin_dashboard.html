@@ -2,52 +2,79 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>📊 SmartOPD Admin Dashboard</title>
+  <title>SmartOPD Admin Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <style>
+    .stat-card {
+      border: 1px solid #dee2e6;
+      border-radius: 0.5rem;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      background-color: #f8f9fa;
+      text-align: center;
+    }
+  </style>
 </head>
-<body class="p-4">
+<body class="p-3">
   <div class="container">
-    <h2 class="mb-4">📊 SmartOPD Admin Dashboard</h2>
+    <h2 class="mb-4">SmartOPD Admin Dashboard</h2>
 
-    <div class="row text-center mb-4">
-      <div class="col-md-4 col-sm-12">👥 <strong>Total Patients:</strong> {{ stats.total_patients }}</div>
-      <div class="col-md-4 col-sm-12">🚨 <strong>Emergency %:</strong> {{ stats.emergency_pct }}%</div>
-      <div class="col-md-4 col-sm-12">⏳ <strong>Avg. Wait Time:</strong> {{ stats.avg_wait }} min</div>
+    <div class="row">
+      <div class="col-md-4 col-sm-12">
+        <div class="stat-card">
+          <strong>Total Patients</strong><br>
+          {{ stats.total_patients }}
+        </div>
+      </div>
+      <div class="col-md-4 col-sm-12">
+        <div class="stat-card">
+          <strong>Emergency %</strong><br>
+          {{ stats.emergency_pct }}%
+        </div>
+      </div>
+      <div class="col-md-4 col-sm-12">
+        <div class="stat-card">
+          <strong>Avg. Wait Time</strong><br>
+          {{ stats.avg_wait }} min
+        </div>
+      </div>
     </div>
 
-    <h4 class="mt-4">🔥 Symptom Heatmap</h4>
+    <h4 class="mt-4">Symptom Heatmap</h4>
     <p class="text-muted">Chart unavailable – script disabled temporarily.</p>
     <canvas id="heatmapChart" height="120" style="display: none;"></canvas>
 
-    <h4 class="mt-5">❌ Missed Follow-ups: <strong>{{ stats.missed_followups }}</strong></h4>
+    <h4 class="mt-4">Missed Follow-ups: <strong>{{ stats.missed_followups }}</strong></h4>
 
-    <h4 class="mt-4">🗣 Patient Feedback</h4>
-    <table class="table table-striped">
-      <thead class="table-dark">
-        <tr>
-          <th>Name</th>
-          <th>Triage</th>
-          <th>Feedback</th>
-          <th>Sentiment</th>
-          <th>Time</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for f in feedbacks %}
-        <tr>
-          <td>{{ f.name }}</td>
-          <td>{{ f.triage_level }}</td>
-          <td>{{ f.feedback }}</td>
-          <td>{{ f.sentiment }}</td>
-          <td>{{ f.timestamp }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+    <h4 class="mt-4">Patient Feedback</h4>
+    <div class="table-responsive">
+      <table class="table table-striped table-bordered">
+        <thead class="table-dark">
+          <tr>
+            <th>Name</th>
+            <th>Triage</th>
+            <th>Feedback</th>
+            <th>Sentiment</th>
+            <th>Time</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for f in feedbacks %}
+          <tr>
+            <td>{{ f.name }}</td>
+            <td>{{ f.triage_level }}</td>
+            <td>{{ f.feedback }}</td>
+            <td>{{ f.sentiment }}</td>
+            <td>{{ f.timestamp }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
 
-    <a href="/export" class="btn btn-outline-primary mt-3">⬇️ Export Excel Report</a>
+    <a href="/export" class="btn btn-outline-primary mt-3">Download Excel Report</a>
   </div>
 </body>
 </html>
