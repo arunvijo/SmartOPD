@@ -35,6 +35,14 @@ FUTURE_FILE = "data/future_tokens.csv"
 PATIENTS_CSV = "data/patients.csv"
 FEEDBACK_FILE = "data/feedback.csv"
 
+
+from fastapi.responses import RedirectResponse
+
+@app.get("/chatbot")
+async def redirect_chatbot():
+    return RedirectResponse(url="/chatbot-ui")
+
+
 if not os.path.exists(PATIENTS_CSV):
     pd.DataFrame(columns=[
         "token", "name", "age", "gender", "blood_pressure",
