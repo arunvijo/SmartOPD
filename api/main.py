@@ -1,57 +1,96 @@
+# Updated FastAPI Backend (triage agent)
 from fastapi import FastAPI
 from pydantic import BaseModel
 import pandas as pd
+import os
 from agents import crowd_predictor, symptom_triage, token_scheduler
 from utils.speech_utils import speak_token
-import os
-import re
+import threading
+import time
 
 app = FastAPI()
 
 class PatientRequest(BaseModel):
     name: str
+    age: int
+    gender: int
+    blood_pressure: int
+    cholesterol_level: int
     symptoms: str
+    disease: str = None
 
-@app.get("/")
-def root():
-    return {"message": "SmartOPD FastAPI is running!"}
+@app.on_event("startup")
+def update_agents_periodically():
+    def run_periodically():
+        while True:
+            print("[Updater] Refreshing crowd predictions...")
+            crowd_predictor.save_predictions_to_file()
+            time.sleep(300)  # Refresh every 5 minutes
 
-
-@app.get("/predict")
-def predict():
-    df = crowd_predictor.predict_next_day()
-    # Convert all columns to native Python types
-    df['datetime'] = df['datetime'].astype(str)
-    df['predicted_patients'] = df['predicted_patients'].astype(int)
-    return df.to_dict(orient="records")
-
-
+    threading.Thread(target=run_periodically, daemon=True).start()
 
 @app.post("/triage")
 def triage(data: PatientRequest):
-    output = symptom_triage.classify_symptoms(data.symptoms)
+    crowd_file_path = "data/crowd_density.json"
+    if not os.path.exists(crowd_file_path):
+        print("⚠️ Crowd file missing. Recomputing...")
+        crowd_predictor.save_predictions_to_file()
 
-    # Extract values using regex
-    classification_match = re.search(r"1\.\s*(.*)", output)
-    reason_match = re.search(r"2\.\s*(.*)", output)
+    history_path = "data/patients.csv"
+    past_visits = pd.read_csv(history_path) if os.path.exists(history_path) else pd.DataFrame()
+    past_user = past_visits[past_visits["name"] == data.name]
 
-    triage_level = classification_match.group(1).strip() if classification_match else "Normal"
-    reason = reason_match.group(1).strip() if reason_match else "Not provided"
+    features = symptom_triage.extract_features_from_text(data.symptoms)
+    features.update({
+        "Age": data.age,
+        "Gender": data.gender,
+        "Blood Pressure": data.blood_pressure,
+        "Cholesterol Level": data.cholesterol_level,
+    })
+
+    if not past_user.empty:
+        recent = pd.to_datetime(past_user["timestamp"]).max()
+        days_since_last = (pd.Timestamp.now() - recent).days
+        emergencies = past_user[past_user["triage"] == "Emergency"]
+        if days_since_last < 7 or len(emergencies) >= 2:
+            features["FrequentVisits"] = 1
+
+    result = symptom_triage.triage_decision(features=features, disease_name=data.disease)
+
+    if not result["assign_token"]:
+        return {
+            "token": None,
+            "triage": result["triage"],
+            "reason": "Low severity + high crowd",
+            "suggested_action": result["message"]
+        }
 
     token, queue = token_scheduler.assign_token(
-        data.name, data.symptoms, triage_level, reason
+        data.name, data.symptoms, result["triage"], result["message"]
     )
 
-    speak_token(token, data.name)  # voice callout
+    threading.Thread(target=speak_token, args=(int(token), data.name)).start()
 
-    return {
-        "token": token,
-        "triage": triage_level,
-        "reason": reason
+    record = {
+        "name": data.name,
+        "age": data.age,
+        "gender": data.gender,
+        "blood_pressure": data.blood_pressure,
+        "cholesterol_level": data.cholesterol_level,
+        "symptoms": data.symptoms,
+        "disease": data.disease or "",
+        "triage": result["triage"],
+        "token": int(token),
+        "timestamp": pd.Timestamp.now(),
+        "feedback": ""
     }
 
+    df_record = pd.DataFrame([record])
+    df_record.to_csv(history_path, mode='a', header=not os.path.exists(history_path), index=False)
 
-@app.get("/queue")
-def get_queue():
-    df = pd.read_csv("data/token_queue.csv")
-    return df.to_dict(orient="records")
+    return {
+        "token": int(token),
+        "triage": result["triage"],
+        "reason": result["message"],
+        "suggested_action": "Proceed to OPD. Token generated."
+    }

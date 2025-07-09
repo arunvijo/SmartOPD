@@ -13,8 +13,8 @@ symptoms_list = [
     "Severe bleeding"
 ]
 
-for i in range(100):
-    name = random.choice(names) + str(i)
+for i in range(10):
+    name = random.choice(names)
     symptoms = random.choice(symptoms_list)
     payload = {"name": name, "symptoms": symptoms}
     requests.post("http://localhost:8000/triage", json=payload)

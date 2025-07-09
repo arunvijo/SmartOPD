@@ -10,3 +10,5 @@ requests
 flask
 fastapi
 uvicorn[standard]
+scikit-learn 
+notebook

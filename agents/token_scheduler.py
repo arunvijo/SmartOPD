@@ -19,10 +19,14 @@ TRIAGE_PRIORITY = {
 
 # Load or initialize token queue
 def load_queue():
-    if os.path.exists(QUEUE_FILE):
-        return pd.read_csv(QUEUE_FILE)
-    else:
-        return pd.DataFrame(columns=["token", "name", "symptoms", "triage_level", "timestamp", "reason"])
+    if os.path.exists(QUEUE_FILE) and os.path.getsize(QUEUE_FILE) > 0:
+        try:
+            return pd.read_csv(QUEUE_FILE)
+        except pd.errors.EmptyDataError:
+            pass  # will fall through to return empty DataFrame below
+
+    return pd.DataFrame(columns=["token", "name", "symptoms", "triage_level", "timestamp", "reason"])
+
 
 # Save the queue back to CSV
 def save_queue(queue):
