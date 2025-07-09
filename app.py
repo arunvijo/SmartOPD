@@ -4,12 +4,22 @@ import os
 import requests
 
 app = Flask(__name__)
+app.secret_key = "smartopd-secret-key"
+
 QUEUE_FILE = "data/token_queue.csv"
+FOLLOWUP_FILE = "data/followups.csv"
 
 @app.route("/")
 def index():
-    df = pd.read_csv(QUEUE_FILE) if os.path.exists(QUEUE_FILE) else pd.DataFrame(columns=["token", "name", "symptoms", "triage_level", "timestamp", "reason"])
-    return render_template("index.html", queue=df.to_dict(orient="records"))
+    # Load token queue
+    queue = pd.read_csv(QUEUE_FILE) if os.path.exists(QUEUE_FILE) else pd.DataFrame(columns=["token", "name", "symptoms", "triage_level", "timestamp", "reason"])
+
+    # Load follow-up patients
+    followups = pd.read_csv(FOLLOWUP_FILE) if os.path.exists(FOLLOWUP_FILE) else pd.DataFrame(columns=["name", "last_triage", "last_visit", "days_since", "status"])
+
+    return render_template("index.html",
+                           queue=queue.to_dict(orient="records"),
+                           followups=followups.to_dict(orient="records"))
 
 @app.route("/chatbot", methods=["GET", "POST"])
 def chatbot():

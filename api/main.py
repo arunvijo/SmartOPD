@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 import pandas as pd
 import os
-from agents import crowd_predictor, symptom_triage, token_scheduler
+from agents import crowd_predictor, symptom_triage, token_scheduler, followup_scheduler
 from utils.speech_utils import speak_token
 import threading
 import time
@@ -28,6 +28,16 @@ def update_agents_periodically():
             time.sleep(300)  # Refresh every 5 minutes
 
     threading.Thread(target=run_periodically, daemon=True).start()
+
+def periodic_followup_runner(interval_minutes=60):
+    while True:
+        try:
+            followup_scheduler.save_followups()
+        except Exception as e:
+            print("❌ Follow-up Agent Error:", e)
+        time.sleep(interval_minutes * 60)
+
+threading.Thread(target=periodic_followup_runner, daemon=True).start()
 
 @app.post("/triage")
 def triage(data: PatientRequest):
@@ -94,3 +104,11 @@ def triage(data: PatientRequest):
         "reason": result["message"],
         "suggested_action": "Proceed to OPD. Token generated."
     }
+
+
+@app.get("/followups")
+def get_followups():
+    if os.path.exists("data/followups.csv"):
+        df = pd.read_csv("data/followups.csv")
+        return df.to_dict(orient="records")
+    return []

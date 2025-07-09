@@ -41,5 +41,15 @@
       </tbody>
     </table>
   </div>
+  <h2>📋 Follow-up Patients</h2>
+  {% if followups %}
+  <ul>
+    {% for f in followups %}
+      <li><strong>{{ f.name }}</strong> — Last Visit: {{ f.last_visit }} ({{ f.last_triage }})</li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p>No follow-up patients today ✅</p>
+  {% endif %}
 </body>
 </html>
