@@ -26,7 +26,7 @@ Copy
 Edit
 uvicorn main:app --reload
 Then open: http://localhost:8000
-
+```
 🧠 What You Can Contribute
 🧪 Area	💡 Task
 AI Model	Improve Emergency vs Priority classification
@@ -43,14 +43,17 @@ Accessibility	Screen reader support, contrast improvements
 Fork this repository
 
 Create a new branch:
+```
 git checkout -b feature/my-feature
-
+```
 Make your changes & commit:
+```
 git commit -m "Add my feature"
-
+```
 Push to your fork:
+```
 git push origin feature/my-feature
-
+```
 Open a Pull Request (PR)
 
 📚 Contribution Guidelines
@@ -92,14 +95,8 @@ Let us know if you'd like:
 
 Thank you for supporting SmartOPD 💚
 
-yaml
-Copy
-Edit
-
----
-
 ### ✅ To Use This:
 1. Save as `CONTRIBUTING.md` in your project root.
 2. Optional: Add a line in your `README.md`:
-```markdown
+3. 
 👉 See [CONTRIBUTING.md](CONTRIBUTING.md) to get involved.
