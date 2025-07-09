@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 import pandas as pd
 import os
-from agents import crowd_predictor, symptom_triage, token_scheduler, followup_scheduler
+from agents import crowd_predictor, symptom_triage, token_scheduler, followup_scheduler, future_scheduler
 from utils.speech_utils import speak_token
 import threading
 import time
@@ -28,6 +28,18 @@ def update_agents_periodically():
             time.sleep(300)  # Refresh every 5 minutes
 
     threading.Thread(target=run_periodically, daemon=True).start()
+
+@app.post("/rebook")
+def rebook_case(data: dict):
+    future_scheduler.save_future_booking(data)
+    return {"status": "scheduled", "scheduled_for": (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")}
+
+@app.post("/reschedule")
+def reschedule(data: dict):
+    name = data.get("name")
+    new_date = data.get("new_date")
+    future_scheduler.reschedule_booking(name, new_date)
+    return {"status": "rescheduled", "new_date": new_date}
 
 def periodic_followup_runner(interval_minutes=60):
     while True:
@@ -68,13 +80,22 @@ def triage(data: PatientRequest):
     result = symptom_triage.triage_decision(features=features, disease_name=data.disease)
 
     if not result["assign_token"]:
+        # Auto-schedule rebooking for tomorrow
+        future_scheduler.save_future_booking({
+            "name": data.name,
+            "symptoms": data.symptoms,
+            "triage": result["triage"],
+            "reason": result["message"]
+        })
+
         return {
             "token": None,
             "triage": result["triage"],
-            "reason": "Low severity + high crowd",
-            "suggested_action": result["message"]
+            "reason": result["message"],
+            "suggested_action": "You’ve been automatically rebooked for tomorrow due to high crowd. Please visit again."
         }
 
+    # Token assigned
     token, queue = token_scheduler.assign_token(
         data.name, data.symptoms, result["triage"], result["message"]
     )

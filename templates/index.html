@@ -10,6 +10,7 @@
   <div class="container">
     <h2 class="mb-4">🔁 Live OPD Token Queue</h2>
     <a href="/chatbot" class="btn btn-outline-success mb-3">💬 Try Chatbot</a>
+    <a href="/admin" class="btn btn-outline-dark mb-3 ms-2">🛠 Admin Panel</a>
 
     <form method="POST" action="/search" class="mb-4">
       <div class="input-group">
@@ -40,16 +41,43 @@
         {% endfor %}
       </tbody>
     </table>
+
+    <h2 class="mt-5">📋 Follow-up Patients</h2>
+    {% if followups %}
+    <ul>
+      {% for f in followups %}
+        <li><strong>{{ f.name }}</strong> — Last Visit: {{ f.last_visit }} ({{ f.last_triage }})</li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p>No follow-up patients today ✅</p>
+    {% endif %}
+
+    <h2 class="mt-5">📅 Rebooked Appointments</h2>
+    {% if rebookings %}
+    <table class="table table-sm table-striped">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Triage</th>
+          <th>Reason</th>
+          <th>Rebooked For</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rebookings %}
+        <tr>
+          <td>{{ r.name }}</td>
+          <td>{{ r.triage }}</td>
+          <td>{{ r.reason }}</td>
+          <td>{{ r.date }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p>No rebookings pending ⏳</p>
+    {% endif %}
   </div>
-  <h2>📋 Follow-up Patients</h2>
-  {% if followups %}
-  <ul>
-    {% for f in followups %}
-      <li><strong>{{ f.name }}</strong> — Last Visit: {{ f.last_visit }} ({{ f.last_triage }})</li>
-    {% endfor %}
-  </ul>
-  {% else %}
-  <p>No follow-up patients today ✅</p>
-  {% endif %}
 </body>
 </html>

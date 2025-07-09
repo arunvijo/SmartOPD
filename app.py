@@ -8,6 +8,8 @@ app.secret_key = "smartopd-secret-key"
 
 QUEUE_FILE = "data/token_queue.csv"
 FOLLOWUP_FILE = "data/followups.csv"
+FUTURE_FILE = "data/future_tokens.csv"
+
 
 @app.route("/")
 def index():
@@ -16,10 +18,12 @@ def index():
 
     # Load follow-up patients
     followups = pd.read_csv(FOLLOWUP_FILE) if os.path.exists(FOLLOWUP_FILE) else pd.DataFrame(columns=["name", "last_triage", "last_visit", "days_since", "status"])
+    future_tokens = pd.read_csv(FUTURE_FILE) if os.path.exists(FUTURE_FILE) else pd.DataFrame()
 
     return render_template("index.html",
-                           queue=queue.to_dict(orient="records"),
-                           followups=followups.to_dict(orient="records"))
+                        queue=queue.to_dict(orient="records"),
+                        followups=followups.to_dict(orient="records"),
+                        future_bookings=future_tokens.to_dict(orient="records"))
 
 @app.route("/chatbot", methods=["GET", "POST"])
 def chatbot():
