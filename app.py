@@ -55,14 +55,48 @@ def feedback():
 
 @app.route("/admin")
 def admin():
+    patient_file = "data/patients.csv"
     feedback_file = "data/feedback.csv"
-    if os.path.exists(feedback_file):
-        df = pd.read_csv(feedback_file)
-        summary = df.groupby("sentiment").size().reset_index(name="count").to_dict(orient="records")
-    else:
-        summary = []
+    followup_file = "data/followups.csv"
 
-    return render_template("admin.html", summary=summary)
+    patients = pd.read_csv(patient_file) if os.path.exists(patient_file) else pd.DataFrame()
+    feedbacks = pd.read_csv(feedback_file) if os.path.exists(feedback_file) else pd.DataFrame()
+    followups = pd.read_csv(followup_file) if os.path.exists(followup_file) else pd.DataFrame()
+
+    stats = {
+        "total_patients": len(patients),
+        "emergency_pct": 0,
+        "avg_wait": 0,
+        "missed_followups": 0
+    }
+
+    if not patients.empty:
+        emergencies = patients[patients.triage == "Emergency"]
+        stats["emergency_pct"] = round(100 * len(emergencies) / len(patients), 1)
+        patients["timestamp"] = pd.to_datetime(patients["timestamp"], errors="coerce")
+        wait_times = (pd.Timestamp.now() - patients["timestamp"]).dt.total_seconds() / 60
+        stats["avg_wait"] = round(wait_times.mean(), 1)
+
+    if not followups.empty:
+        followups["date"] = pd.to_datetime(followups["date"], errors="coerce")
+        stats["missed_followups"] = len(followups[followups["date"] < pd.Timestamp.now()])
+
+    heatmap = patients["symptoms"].value_counts().head(10).to_dict() if not patients.empty else {}
+
+    return render_template("admin_dashboard.html",
+                           stats=stats,
+                           heatmap=heatmap,
+                           feedbacks=feedbacks.to_dict(orient="records"))
+
+@app.route("/export")
+def export_data():
+    file_path = "data/patients.csv"
+    if os.path.exists(file_path):
+        df = pd.read_csv(file_path)
+        export_path = "data/patient_report.xlsx"
+        df.to_excel(export_path, index=False)
+        return f"✅ Exported to {export_path}"
+    return "⚠️ No patient data found."
 
 
 
