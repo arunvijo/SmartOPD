@@ -16,7 +16,7 @@ from utils.speech_utils import speak_token
 app = FastAPI()
 
 # Mount static files and templates
-app.mount("/static", StaticFiles(directory="static"), name="static")
+# app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
 # Enable CORS (optional)
